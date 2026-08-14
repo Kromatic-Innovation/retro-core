@@ -41,13 +41,40 @@ jobs:
       - name: Run test suite
         run: npm test
 
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+
+      # A coverage number nobody asserts on is decoration. `npm run
+      # test:coverage` carries the thresholds, so this gate is reproducible
+      # locally by the same command CI runs. The floor is 100% on
+      # `lib/retro-core.mjs` and is scoped to that file by
+      # `--test-coverage-include`: the test file's own function coverage is
+      # below 100% by construction, since assertion callbacks on paths the suite
+      # proves are never taken do not themselves execute.
+      #
+      # This is a lock, not a target. If it goes red, cover the line — do not
+      # lower the threshold. See retro-core#7.
+      - name: Enforce 100% coverage floor on lib/retro-core.mjs
+        run: npm run test:coverage
+
   ci-required:
     name: CI Required
     # `if: always()` so this aggregate reports a conclusion even when a quality
     # job fails or is skipped — a gate that never runs is a gate that never
     # blocks.
     if: always()
-    needs: [test]
+    needs: [test, coverage]
     runs-on: ubuntu-latest
     permissions: {}
     steps:
@@ -60,6 +87,7 @@ jobs:
           # silently.
           EVALUATED_RESULTS: |
             test=${{ needs.test.result }}
+            coverage=${{ needs.coverage.result }}
           NEEDS_JSON: ${{ toJSON(needs) }}
         run: |
           set -euo pipefail

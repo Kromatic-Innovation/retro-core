@@ -15,6 +15,7 @@
     "node": ">=22.8.0"
   },
   "scripts": {
-    "test": "node --test lib/retro-core.test.mjs"
+    "test": "node --test lib/retro-core.test.mjs",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=lib/retro-core.mjs --test-coverage-lines=100 --test-coverage-branches=100 --test-coverage-functions=100 lib/retro-core.test.mjs"
   }
 }
