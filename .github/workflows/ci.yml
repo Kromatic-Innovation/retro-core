@@ -1,0 +1,111 @@
+name: CI
+
+# Quality gate for retro-core.
+#
+# The `CI Required` aggregate job below is load-bearing beyond this workflow:
+# `.github/workflows/promote-main.yml` resolves a check-run named exactly
+# `CI Required` on the source SHA via the check-runs API, and refuses to promote
+# develop -> main unless every such check-run concluded `success`. Renaming that
+# job — or letting it pass while a quality job is red — leaves the promotion gate
+# either permanently closed or silently open. See retro-core#2.
+
+on:
+  pull_request:
+    branches: [develop]
+  push:
+    branches: [develop]
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+
+      # No install step: the suite imports only `node:test` and
+      # `node:assert/strict`, so there are no dependencies to fetch.
+      - name: Run test suite
+        run: npm test
+
+  ci-required:
+    name: CI Required
+    # `if: always()` so this aggregate reports a conclusion even when a quality
+    # job fails or is skipped — a gate that never runs is a gate that never
+    # blocks.
+    if: always()
+    needs: [test]
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Aggregate quality-job results
+        env:
+          # One `job=result` line per job listed under `needs:` above. The step
+          # cross-checks this list against the `needs` context in both
+          # directions, so a job added to `needs:` but never evaluated here (a
+          # gate that cannot fail) turns this aggregate red instead of passing
+          # silently.
+          EVALUATED_RESULTS: |
+            test=${{ needs.test.result }}
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          set -euo pipefail
+
+          status=0
+          declare -A evaluated=()
+
+          while IFS= read -r entry; do
+            [ -n "$entry" ] || continue
+            job="$(printf '%s' "${entry%%=*}" | tr -d '[:space:]')"
+            result="$(printf '%s' "${entry#*=}" | tr -d '[:space:]')"
+            evaluated["$job"]=1
+            case "$result" in
+              success|skipped)
+                echo "ok: ${job} = ${result}"
+                ;;
+              *)
+                echo "::error::Quality job '${job}' concluded '${result:-<empty>}' (expected 'success' or 'skipped')."
+                status=1
+                ;;
+            esac
+          done <<< "$EVALUATED_RESULTS"
+
+          needs_jobs="$(printf '%s' "$NEEDS_JSON" | jq -r 'keys[]')"
+
+          # Listed under `needs:` but never evaluated above — a dependency that
+          # cannot fail this gate.
+          while IFS= read -r job; do
+            [ -n "$job" ] || continue
+            if [ -z "${evaluated[$job]:-}" ]; then
+              echo "::error::Job '${job}' is listed under needs: but its result is never evaluated by this step."
+              status=1
+            fi
+          done <<< "$needs_jobs"
+
+          # Evaluated above but absent from `needs:` — an expression that is
+          # always empty, so it is inert rather than protective.
+          for job in "${!evaluated[@]}"; do
+            if ! printf '%s\n' "$needs_jobs" | grep -qx -- "$job"; then
+              echo "::error::Job '${job}' is evaluated by this step but is not listed under needs:."
+              status=1
+            fi
+          done
+
+          if [ "$status" -ne 0 ]; then
+            echo "::error::CI Required is red."
+            exit 1
+          fi
+          echo "CI Required: all quality jobs green."
