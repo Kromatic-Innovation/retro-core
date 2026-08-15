@@ -125,7 +125,7 @@ test("a tree whose relative imports all resolve in-repo passes", () => {
 test("an import reaching outside the repository root is reported as escaping", () => {
   withTree(
     {
-      "lib/index.mjs": 'import x from "../../code-workspace-config/lib/x.mjs";\nexport { x };\n',
+      "lib/index.mjs": 'import x from "../../sibling-repo/lib/x.mjs";\nexport { x };\n',
     },
     (root) => {
       const result = checkResolve({ root });
