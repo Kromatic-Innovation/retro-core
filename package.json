@@ -2,6 +2,17 @@
   "name": "retro-core",
   "version": "0.1.0",
   "description": "Generic retrospective orchestrator: wires a loader, an analyzer, and a router into one run. Never commits anything itself.",
+  "keywords": [
+    "retrospective",
+    "retro",
+    "orchestrator",
+    "dependency-injection",
+    "zero-dependency",
+    "continuous-improvement",
+    "agent",
+    "pipeline"
+  ],
+  "license": "Apache-2.0",
   "type": "module",
   "main": "./lib/retro-core.mjs",
   "exports": {
@@ -11,6 +22,15 @@
     "lib/retro-core.mjs",
     "README.md"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kromatic-Innovation/retro-core.git"
+  },
+  "homepage": "https://github.com/Kromatic-Innovation/retro-core#readme",
+  "bugs": {
+    "url": "https://github.com/Kromatic-Innovation/retro-core/issues"
+  },
+  "author": "Kromatic Innovation (https://www.kromatic.com/)",
   "engines": {
     "node": ">=22.8.0"
   },

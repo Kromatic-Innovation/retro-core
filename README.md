@@ -1,5 +1,7 @@
 # retro-core
 
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+
 A generic retrospective orchestrator. It wires three pluggable pieces — a
 **loader**, an **analyzer**, and a **router** — into a single run, and returns
 what each of them produced.
@@ -15,6 +17,8 @@ npm install retro-core
 ```
 
 Requires Node.js **>= 22.8.0**. The package has no dependencies.
+
+Licensed under **Apache-2.0** — see [`LICENSE`](LICENSE).
 
 ## Usage
 
@@ -81,3 +85,7 @@ npm test
 
 No install step is needed — the suite imports only `node:test` and
 `node:assert/strict`.
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the branch model, the full set of
+checks CI runs, and the release process. Participation is governed by the
+[Code of Conduct](CODE_OF_CONDUCT.md).
