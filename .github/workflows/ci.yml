@@ -68,13 +68,35 @@ jobs:
       - name: Enforce 100% coverage floor on lib/retro-core.mjs
         run: npm run test:coverage
 
+  resolve:
+    name: Resolve check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+
+      # This package was extracted from a larger tree, so a relative reference
+      # that still points back toward that tree parses, lints and tests green
+      # here while breaking for anyone who installs the package standalone.
+      # The check is static and runs on every PR, before a consumer is
+      # repointed at this package rather than after. See retro-core#4.
+      - name: Check in-repo references resolve
+        run: npm run check:resolve
+
   ci-required:
     name: CI Required
     # `if: always()` so this aggregate reports a conclusion even when a quality
     # job fails or is skipped — a gate that never runs is a gate that never
     # blocks.
     if: always()
-    needs: [test, coverage]
+    needs: [test, coverage, resolve]
     runs-on: ubuntu-latest
     permissions: {}
     steps:
@@ -88,6 +110,7 @@ jobs:
           EVALUATED_RESULTS: |
             test=${{ needs.test.result }}
             coverage=${{ needs.coverage.result }}
+            resolve=${{ needs.resolve.result }}
           NEEDS_JSON: ${{ toJSON(needs) }}
         run: |
           set -euo pipefail
