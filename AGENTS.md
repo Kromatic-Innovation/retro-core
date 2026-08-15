@@ -1,22 +1,27 @@
 # AGENTS.md — retro-core
 
-LLM-agnostic agent guidance for this repo. Workspace-level policy applies where
-this file is silent — see `code-workspace-config/AGENTS.md`.
+LLM-agnostic agent guidance for this repo.
 
 ## What this is
 
 The shared retrospective skeleton — the read → compare → propose → route
 contract that every retro process plugs a loader, an analyzer, and a router
-into, with a hard never-auto-commit boundary.
+into, with a hard never-apply boundary: the core hands proposals to an injected
+router and has no path to commit a change itself.
+
+`SKILL.md` is the contract in full — read it before changing anything under
+`lib/`. `README.md` is the API surface.
 
 ## Branch policy
 
 - Default branch: `develop`; open PRs against `develop`.
 
-## Strategy tier
+## Checks
 
-**T3 — evidence.** The retrospective and self-improvement loop.
+Run before opening a PR — CI runs the same commands:
 
-Band rationale: `code-workspace-config/docs/strategy/portfolio.md`. Canonical
-strategy: `code-workspace-config/docs/strategy/README.md`. Strategy is stated in
-prose there and nowhere else — do not restate or paraphrase it here.
+```sh
+npm test              # both suites, hermetic (no fs, no network)
+npm run test:coverage # 100% floor on lib/retro-core.mjs — a lock, not a target
+npm run check:resolve # every relative reference resolves inside this repo
+```
