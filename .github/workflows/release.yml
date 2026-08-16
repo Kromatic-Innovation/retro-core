@@ -1,0 +1,86 @@
+name: Release
+
+# OIDC Trusted Publishing to npm — no NPM_TOKEN, no OTP prompt, nothing to rotate
+# or leak. Trusted Publisher configured on npmjs.com for this package (owner
+# Kromatic-Innovation, repo retro-core, workflow release.yml). Modeled on
+# ideate-core's release.yml (the working pattern already proven on
+# ideate-core/panelist/tickle-stick) and adapted to this repo's actual scripts
+# — retro-core ships no `build` script and requires Node >=22.8.0, vs.
+# ideate-core's Node >=20.
+#
+# Trigger: push a `vX.Y.Z` tag that matches package.json's version, on a commit
+# that has been promoted to `main`. `retro-core@0.1.0` itself was published
+# manually (2026-08-16, before Trusted Publishing was configured) — this
+# workflow is for 0.1.1 and everything after.
+#
+# Actions pinned to full commit SHAs, not mutable tags — a compromised upstream
+# maintainer retagging e.g. v6 must not silently reach this repo's trusted
+# publish identity.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-publish:
+    name: Build + publish to npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # npm provenance attestations + trusted publishing via OIDC
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          registry-url: https://registry.npmjs.org
+
+      - name: Verify tag matches package.json version
+        run: |
+          set -euo pipefail
+          PKG_VERSION="$(node -p "require('./package.json').version")"
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::Release tag '${GITHUB_REF_NAME}' disagrees with package.json version '${PKG_VERSION}'. Tag the commit whose manifest matches, or bump package.json before tagging."
+            exit 1
+          fi
+          echo "OK: tag '${GITHUB_REF_NAME}' matches package.json version '${PKG_VERSION}'."
+
+      - name: Assert tagged commit is merged (ancestor of origin/main)
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --prune origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Tagged commit ${GITHUB_SHA} is not an ancestor of origin/main. Publish only from tags on merged, promoted code."
+            exit 1
+          fi
+          echo "OK: tagged commit ${GITHUB_SHA} is reachable from origin/main."
+
+      - name: Upgrade npm to support trusted publishing
+        # Trusted publishing requires npm >= 11.5.1; Node 22 ships an older npm.
+        # Pinned to an exact version (not a floating range) — this step performs
+        # the OIDC<->registry token exchange, so an upstream 11.x regression must
+        # not land unannounced in the publish path. Bump deliberately.
+        run: |
+          npm install -g npm@11.19.0
+          npm --version
+
+      # No install step: the suite imports only `node:test` and
+      # `node:assert/strict`, and the package has no dependencies —
+      # there is no package-lock.json and nothing to fetch.
+      - name: Test
+        run: npm test
+
+      - name: Verify package contents
+        run: npm pack --dry-run
+
+      - name: Publish to npm
+        run: npm publish --provenance --access public
