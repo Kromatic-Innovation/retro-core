@@ -10,6 +10,14 @@ The core performs **no side effects of its own**. It never writes a file, never
 commits, and never calls out to a network. Every effect a retro has is the
 router's, and the default router is print-only.
 
+## Status
+
+**Maintenance.** retro-core is maintained on a best-effort basis: bug fixes and
+security fixes only. No new features are planned. Issues and pull requests that
+fix bugs are welcome; feature requests are unlikely to be taken up. Report
+security issues privately to **opensource@kromatic.com** (see
+[`CONTRIBUTING.md`](CONTRIBUTING.md#reporting-bugs-and-requesting-features)).
+
 ## Install
 
 ```sh
