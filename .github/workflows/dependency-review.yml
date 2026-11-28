@@ -1,10 +1,9 @@
 name: Dependency Review
 
 # Blocks a PR that introduces a vulnerable or disallowed-license dependency. The
-# dependency-graph API it reads requires a public repo (or GHAS), so the job is
-# guarded to run only when the repository is public. This repo is private today,
-# so the job is inert; it activates by itself the moment visibility flips, with
-# no edit needed here. See retro-core#15.
+# dependency-graph API it reads requires a public repo (or GHAS) with the
+# Dependency graph enabled in Settings -> Code security. The package has zero
+# dependencies today, so this is a tripwire for the day one is added.
 
 on:
   pull_request:

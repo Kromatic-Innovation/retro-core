@@ -1,12 +1,9 @@
 name: Release
 
 # OIDC Trusted Publishing to npm — no NPM_TOKEN, no OTP prompt, nothing to rotate
-# or leak. Trusted Publisher configured on npmjs.com for this package (owner
-# Kromatic-Innovation, repo retro-core, workflow release.yml). Modeled on
-# ideate-core's release.yml (the working pattern already proven on
-# ideate-core/panelist/tickle-stick) and adapted to this repo's actual scripts
-# — retro-core ships no `build` script and requires Node >=22.8.0, vs.
-# ideate-core's Node >=20.
+# or leak. A Trusted Publisher is configured on npmjs.com for this package
+# (owner Kromatic-Innovation, repo retro-core, workflow release.yml). The package
+# has no `build` script and requires Node >=22.8.0.
 #
 # Trigger: push a `vX.Y.Z` tag that matches package.json's version, on a commit
 # that has been promoted to `main`. `retro-core@0.1.0` itself was published

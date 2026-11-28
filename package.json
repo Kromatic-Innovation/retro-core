@@ -1,6 +1,6 @@
 {
   "name": "retro-core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Generic retrospective orchestrator: wires a loader, an analyzer, and a router into one run. Never commits anything itself.",
   "keywords": [
     "retrospective",

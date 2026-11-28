@@ -59,46 +59,6 @@ proposals out for review, so that the change which eventually lands is a human's
 visible decision. A process that wires retro-core inherits that boundary for
 free — the core gives it no path to commit.
 
-## Evidence provenance — source class and controls
-
-A retro is where an incident's claims get promoted into durable knowledge, so an
-unvalidated claim promoted here is worse than one that stays in a transcript — it
-becomes a rule that misdirects future work. Before a claim is used to derive a
-proposal, hold it to two clauses:
-
-1. **Name the source class.** Every claim declares whether its evidence is
-   **ground truth** (a direct read of the subject — an API response, `ps`, `git`),
-   a **system-derived field** (a value computed or reported by some tool *about*
-   the subject), or an **authored instrument** (a script or probe written during
-   the session to answer the question). Any claim in the latter two classes that
-   **drives a fix design** requires a **second, independent** source before it is
-   quotable — one that does not share the first's failure mode.
-2. **An instrument authored mid-incident is not quotable until it has been run
-   against a known-positive *and* a known-negative control.** A probe that has
-   only ever been pointed at the failing case cannot distinguish "the thing is
-   broken" from "the probe never measured what I think it measured." It earns
-   the right to be cited only after it goes green on a case known to be good
-   *and* red on a case known to be bad.
-
-*Why this is load-bearing.* These clauses come out of a single incident in which
-three self-authored instruments each produced a confident **wrong** answer:
-
-- **An exit code read through a pipeline.** `bash guard 2>&1 | tail -12; echo
-  "exit=$?"` reports `tail`'s status, not the guard's. It produced a false
-  finding — "the guard aborts but exits 0" — that was carried forward until a
-  reviewer challenged it and a controlled probe showed the guard exits `1`.
-- **A re-probe with no positive control.** The first correction tested against a
-  case that never triggered the condition at all, so its "exit 0" meant *clean
-  pass*, not *abort with 0*. It proved nothing while appearing to confirm —
-  exactly the control that clause 2 requires.
-- **A reporter reading a field its source omits.** A watcher read a field from a
-  JSON view that does not carry it — a system-derived field taken as ground
-  truth — and printed a confident negative verdict for every case it examined.
-
-The false claim, the failed correction, and the successful control were all in
-one incident, which is unusually clean evidence for a rule that would otherwise
-read as pedantry.
-
 ## How a process wires it
 
 A retro process supplies its own three pieces:
