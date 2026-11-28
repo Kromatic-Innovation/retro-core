@@ -10,6 +10,22 @@ The core performs **no side effects of its own**. It never writes a file, never
 commits, and never calls out to a network. Every effect a retro has is the
 router's, and the default router is print-only.
 
+## North star
+
+retro-core exists to be **the smallest possible shared skeleton** for a
+retrospective: read evidence → compare intent vs. outcome → propose → route.
+It is finished when it is boring. Concretely:
+
+- **One job.** Call `load`, then `analyze`, then `route`, in that order, and
+  return what they produced. Nothing else belongs in the core.
+- **Never applies a change.** The core hands proposals to an injected router and
+  has no path to commit, write, or publish anything itself.
+- **Zero dependencies, offline tests, 100% coverage of `lib/`.**
+
+**Non-goals** — these are out of scope by design, not by oversight: domain
+analysis, storage, scheduling, CLIs, LLM calls, built-in routers beyond the
+print-only default, and any dependency. Those belong in the caller's pieces.
+
 ## Status
 
 **Maintenance.** retro-core is maintained on a best-effort basis: bug fixes and
@@ -85,14 +101,26 @@ The default router. A pure no-op that returns
 how a caller distinguishes a dry run from a run that actually performed
 something.
 
+## Repository map
+
+| Path | What it is |
+| --- | --- |
+| `lib/retro-core.mjs` | The entire library (~60 lines). The only file that ships, with this README. |
+| `lib/retro-core.test.mjs` | Hermetic unit tests for the library. |
+| `SKILL.md` | The contract in prose: what each piece owes and how an agent-driven process conforms without importing the code. |
+| `scripts/check-resolve.mjs` | CI check that every relative reference resolves inside this repo. |
+| `public-safe-lint.sh` | CI scan that keeps local paths and private references out of public files. |
+| `.github/workflows/` | CI, release (npm, tag-triggered), and repository hygiene workflows. |
+
 ## Development
 
 ```sh
-npm test
+npm test              # both suites, no install step
+npm run test:coverage # 100% floor on lib/retro-core.mjs
+npm run check:resolve # relative references resolve in-repo
 ```
 
-No install step is needed — the suite imports only `node:test` and
-`node:assert/strict`.
+No install step is needed — the suites import only Node built-ins.
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the branch model, the full set of
 checks CI runs, and the release process. Participation is governed by the

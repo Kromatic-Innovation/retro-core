@@ -63,26 +63,18 @@ and open your PR against `develop`.
 (0.x)** — while the major version is `0`, a **minor** bump may include breaking
 changes and a **patch** bump is backward-compatible fixes only.
 
-Publishing runs through
-[`release-npm.yml`](.github/workflows/release-npm.yml), which is
-**`workflow_dispatch`-only, deliberately**: an npm version cannot be cleanly
-unpublished after 72 hours and can never be reused, so no push, tag, or schedule
-trigger may be added to it.
+Publishing runs through [`release.yml`](.github/workflows/release.yml), which
+is **triggered by pushing a `vX.Y.Z` tag** and publishes to npm with OIDC
+trusted publishing (no npm token is stored anywhere). Before publishing, it
+refuses to proceed unless the tag matches `package.json#version` and the tagged
+commit is already on `main`. It then runs the test suite and `npm pack --dry-run`
+before `npm publish --provenance`.
 
-1. Bump `version` in `package.json`.
-2. Merge to `develop` and promote to `main`.
-3. Tag the release commit: `git tag vX.Y.Z && git push origin vX.Y.Z`.
-4. Dispatch the release workflow with `dry_run: true` first — that is the
-   default, so a mis-dispatch cannot publish. It runs the suite and a
-   `npm publish --dry-run`.
-5. Dispatch again with `dry_run: false` to publish for real.
-
-A real publish additionally requires the `NPM_TOKEN` repository secret (an npm
-automation token with publish rights). Until it exists the workflow fails fast
-with an explicit message rather than half-publishing.
-
-You can rehearse packaging at any time, without the workflow, by running
-`npm publish --dry-run` locally.
+1. Bump `version` in `package.json` in a PR against `develop`.
+2. Merge, and promote `develop` to `main`.
+3. Rehearse locally if you like: `npm publish --dry-run`.
+4. Tag the promoted commit and push the tag — **this publishes**:
+   `git tag vX.Y.Z <sha-on-main> && git push origin vX.Y.Z`.
 
 **Rolling back a bad release.** npm forbids re-publishing a version once
 unpublished, and unpublish is only allowed within 72 hours. **Prefer
